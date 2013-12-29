@@ -55,8 +55,16 @@
         //根据要求的图片大小设置右边预览区
         var rightTitle = createEl("div", right, "AlloyClipRightTitle");
         var rightContent = createEl("div", right, "AlloyClipRightContent");
+        var rightInfo = createEl("div", right, "AlloyClipRightInfo");
+        var confirmButton = createEl("div", right, "AlloyClipConfim");
 
         rightTitle.innerHTML = "预览";
+        rightInfo.innerHTML = _w + "×" + _h;
+        confirmButton.innerHTML = "确定";
+
+        rightInfo.style.display = "none";
+
+        this.rightInfo = rightInfo;
         this.rightContent = rightContent;
         right.style.width = _w + 40 + "px";
 
@@ -622,15 +630,16 @@
             var scaleY = this.defaultHeight / clipInfo.height;
 
             aiLayer.clip(clipInfo.left, clipInfo.top, clipInfo.width, clipInfo.height).scale(scaleX, scaleY).show(this.rightContent);
+            this.rightInfo.style.display = "";
         }
     };
 
-    var AC = function(selector){
+    var AC = function(selector, width, height){
         //取到el
         var el = document.querySelectorAll(selector);
 
         for(var i = 0; i < el.length; i ++){
-            new singleAC(el[i]);
+            new singleAC(el[i], width, height);
         }
     };
 
