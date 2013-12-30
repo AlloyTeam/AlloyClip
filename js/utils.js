@@ -134,7 +134,7 @@
                             }
 
                             if(node == proxyNode || node.parentNode == proxyNode) return;
-                            check(node.parentNode);
+                            node.parentNode && check(node.parentNode);
                         }
 
                         check(e.srcElement);
@@ -229,9 +229,6 @@
         if(window.addEventListener){
 
             return function(el, event, func){
-                if(! el){
-                    debugger;
-                }
                 el.addEventListener(event, func, false);
                 el.id && cache(el.id, event, func);
             };

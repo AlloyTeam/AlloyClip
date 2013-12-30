@@ -12,7 +12,8 @@
         return el;
     };
 
-    var singleAC = function(el, _w, _h){
+    // isFixed  固定选取框 缩放图片
+    var singleAC = function(el, _w, _h, isFixed){
         _w = _w || 80;
         _h = _h || 80;
 
@@ -21,7 +22,11 @@
 
         var _this = this;
         this.el = el;
-        
+
+        this.setting = {};
+
+        this.setting.isFixed = isFixed;
+
         //图像边界信息
         this.imgBoundInfo = {};
         //裁剪边界信息
@@ -29,11 +34,14 @@
 
         var frament = document.createDocumentFragment();
         var wrapperEl = createEl("div", frament, "AlloyClipWapper");
-        var left = createEl("div", wrapperEl, "AlloyClipLeft");
+        var leftWrapper = createEl("div", wrapperEl, "AlloyClipLeftWrapper");
         var right = createEl("div", wrapperEl, "AlloyClipRight");
+        var left = createEl("div", leftWrapper, "AlloyClipLeft");
+        var optionWrapper = createEl("div", leftWrapper, "AlloyClipOptionWrapper");
 
         this.left = left;
         this.right = right;
+        this.optionWrapper = optionWrapper;
 
         //用于居中定位
         var buttonTop = createEl("div", left, "AlloyClipButtonTop");
@@ -41,7 +49,6 @@
         var canvasWrapper = createEl("div", left, "AlloyCanvasWrapper");
         var buttonBottom = createEl("div", left, "AlloyClipButtonTop");
 
-        var optionWrapper = createEl("div", left, "AlloyClipOptionWrapper");
         var mask = createEl("div", left, "AlloyClipMask");
 
         canvasWrapper.id = "AlloyCanvasWrapper";
@@ -56,16 +63,19 @@
         var rightTitle = createEl("div", right, "AlloyClipRightTitle");
         var rightContent = createEl("div", right, "AlloyClipRightContent");
         var rightInfo = createEl("div", right, "AlloyClipRightInfo");
+        var switchPic = createEl("div", right, "AlloyClipSwitchPic");
         var confirmButton = createEl("div", right, "AlloyClipConfim");
 
         rightTitle.innerHTML = "预览";
         rightInfo.innerHTML = _w + "×" + _h;
         confirmButton.innerHTML = "确定";
+        switchPic.innerHTML = "切换图片";
 
         rightInfo.style.display = "none";
 
         this.rightInfo = rightInfo;
         this.rightContent = rightContent;
+        this.switchPic = switchPic;
         right.style.width = _w + 40 + "px";
 
 
@@ -99,6 +109,10 @@
             inputFile.click();
         };
 
+        switchPic.onclick = function(){
+            inputFile.click();
+        };
+
         //上传文件后
         inputFile.onchange = function(e){
             var file = e.target.files[0];
@@ -113,7 +127,17 @@
                     _this.showMask();
 
                     _this.alterImgPositon(this);
-                    _this.getRect();
+                    _this.getRect().init();
+
+                    //show confirm
+                    confirmButton.style.display = "block";
+                    switchPic.style.display = "block";
+
+                    if(isFixed){
+                        _this.fixedInit();
+                    }
+
+                    _this.getOption();
                 };
 
                 tempImg.src = this.result;
@@ -131,6 +155,106 @@
             this.hideUploadBox();
             //显示CanvasWrapper
             this.showCanvas();
+        },
+
+        //对于固定的情形做初始化
+        fixedInit: function(){
+            this.imgEl.style.position = "absolute";
+            this.imgEl.style.left = this.imgBoundInfo.offsetLeft + "px";
+            this.imgEl.style.top = this.imgBoundInfo.offsetTop + "px";
+            this.bindFixedEvent();
+        },
+
+        //固定选取框事件监听
+        bindFixedEvent: function(){
+            var _this = this;
+            var clickFlag = 0;
+            var currLeft, currTop, currPageX, currPageY;
+            this.left.onmousedown = function(e){
+                currLeft = parseInt(_this.imgEl.style.left);
+                currTop = parseInt(_this.imgEl.style.top);
+
+                currPageX = e.pageX;
+                currPageY = e.pageY;
+
+                clickFlag = 1;
+                e.preventDefault();
+            };
+
+            //监听mousemove的动作
+            Utils.addEvent(window, this.left, "mousemove", function(e){
+                var dx, dy;
+                if(clickFlag){
+                    dx = e.pageX - currPageX;
+                    dy = e.pageY - currPageY;
+
+                    var left = currLeft + dx;
+                    var top = currTop + dy;
+
+                    _this.imgEl.style.left = ~~ left + "px";
+                    _this.imgEl.style.top = ~~ top + "px";
+
+                    _this.getRect().setBackgroundPosition();
+
+                    e.preventDefault();
+                }
+            });
+
+            window.addEventListener("mouseup", function(e){
+                clickFlag = 0;
+            });
+
+            //放大的动作
+            var scalePic = function(origin, scaleSize){
+                var w = _this.imgEl.offsetWidth;
+                var h = _this.imgEl.offsetHeight;
+
+                var oX = origin[0];
+                var oY = origin[1];
+
+                //计算origin变换后的坐标
+                var originX = oX * scaleSize;
+                var originY = oY * scaleSize;
+
+                var dx = originX - oX;
+                var dy = originY - oY;
+
+                var left = parseInt(_this.imgEl.style.left) - dx;
+                var top = parseInt(_this.imgEl.style.top) - dy;
+
+                var width = w * scaleSize;
+                var height = h * scaleSize;
+
+                _this.imgEl.style.width = ~~ width + "px";
+                _this.imgEl.style.height = ~~ height + "px";
+                _this.imgEl.style.left = ~~ left + "px";
+                _this.imgEl.style.top = ~~ top + "px";
+
+                _this.imgBoundInfo.width = width;
+                _this.imgBoundInfo.height = height;
+
+                _this.getRect().init();
+            };
+
+            this.left.addEventListener("mousewheel", function(e){
+                if(e.target.className && e.target.className == "AlloyClipRect"){
+                    var origin = [
+                        e.offsetX + e.target.offsetLeft - _this.imgEl.offsetLeft,
+                        e.offsetY + e.target.offsetTop - _this.imgEl.offsetTop
+                    ];
+                }else{
+                    var origin = [
+                        e.offsetX - _this.imgEl.offsetLeft,
+                        e.offsetY - _this.imgEl.offsetTop
+                    ];
+                }
+
+                if(e.wheelDeltaY < 0){
+                    scalePic(origin, 0.8);
+                }else{
+                    scalePic(origin, 1.2);
+                }
+            });
         },
 
         //调整img元素位置
@@ -176,6 +300,33 @@
             this.imgBoundInfo.height = height; 
         },
 
+        //创建option
+        getOption: function(){
+            var _this = this;
+            return this.optionEl || function(){
+                var el = {};
+
+                var barEl = createEl("div", _this.optionWrapper, "AlloyClipOptionBar");
+
+                var navItemWrapper = createEl("ul", barEl, "AlloyClipNav");
+
+                navItemWrapper.innerHTML = "<li>滤镜</li><li>边框</li>";
+
+                var controller = createEl("div", barEl, "AlloyClipOptionController");
+
+                var scale = createEl("span", controller, "AlloyClipCItem");
+                var minify = createEl("span", controller, "AlloyClipCItem");
+
+                scale.innerHTML = "+";
+                minify.innerHTML = "-";
+
+                barEl.appendChild(_this.switchPic);
+
+                _this.optionEl = el;
+                return el;
+            }();
+        },
+
         //创建选取框
         getRect: function(){
             var _this = this;
@@ -185,12 +336,16 @@
                 el.style.height = _this.defaultHeight + "px";
 
                 //居中框
-                var parentWidth = _this.left.offsetWidth;
-                var parentHeight = _this.left.offsetHeight;
-                var elLeft = ~~ ((parentWidth - _this.defaultWidth) / 2) + "px";
-                var elTop = ~~ ((parentHeight - _this.defaultHeight) / 2) + "px";
-                el.style.left = elLeft;
-                el.style.top = elTop;
+                var centerRect = function(){
+                    el.style.width = _this.defaultWidth + "px";
+                    el.style.height = _this.defaultHeight + "px";
+                    var parentWidth = _this.left.offsetWidth;
+                    var parentHeight = _this.left.offsetHeight;
+                    var elLeft = ~~ ((parentWidth - _this.defaultWidth) / 2) + "px";
+                    var elTop = ~~ ((parentHeight - _this.defaultHeight) / 2) + "px";
+                    el.style.left = elLeft;
+                    el.style.top = elTop;
+                };
 
                 var currPageX, currPageY;
                 var currWidth, currHeight;
@@ -475,57 +630,68 @@
 
                 };
 
-                var backgroundSize = _this.imgBoundInfo.width + "px " + _this.imgBoundInfo.height + "px";
+                var initBackground = function(){
+                    var backgroundSize = _this.imgBoundInfo.width + "px " + _this.imgBoundInfo.height + "px";
 
-                //设置el的bg
-                el.style.background = "url(" + _this.imgEl.src + ") no-repeat";
-                el.style.backgroundSize = backgroundSize;
-                
-                setBackgroundPosition();
-
-                el.onmousedown = function(e){
-                    rectClickFlag = 1;
-
-                    currPageX = e.pageX;
-                    currPageY = e.pageY;
-
-                    currLeft = el.offsetLeft;
-                    currTop = el.offsetTop;
-
-                    currWidth = el.offsetWidth;
-                    currHeight = el.offsetHeight;
-
-                };
-
-                for(var i = 0; i < controlDot.length; i ++){
-                    var controlEl = createEl("div", el, "AlloyClipControl");
-
-                    var attrName = ['left', 'right', 'top', 'bottom'];
-                    for(var j = 0; j < attrName.length; j ++){
-                        var attr = attrName[j];
-                        controlDot[i][attr] && (controlEl.style[attr] = (~~ controlDot[i][attr] - 10 + "px"));
-                    }
-
-                    controlEl.onmousedown = function(i){
-                        return function(e){
-                            controlClickFlag = 1;
-                            el.style.webkitTransformOrigin = controlDot[(controlDot.length - 1 - i)].position;
-
-                            currPageX = e.pageX;
-                            currPageY = e.pageY;
-
-                            currWidth = el.offsetWidth;
-                            currHeight = el.offsetHeight;
-
-                            currLeft = el.offsetLeft;
-                            currTop = el.offsetTop;
-
-                            currControlDotI = i;
-                        };
-                    }(i);
+                    //设置el的bg
+                    el.style.background = "url(" + _this.imgEl.src + ") no-repeat";
+                    el.style.backgroundSize = backgroundSize;
+                    setBackgroundPosition();
                 }
 
-                window.onmousemove = function(e){
+                //如果非fixed则监听选取框的运动
+                if(! _this.setting.isFixed){
+                    Utils.addEvent(window, el, "mousedown", function(e){
+                        rectClickFlag = 1;
+
+                        currPageX = e.pageX;
+                        currPageY = e.pageY;
+
+                        currLeft = el.offsetLeft;
+                        currTop = el.offsetTop;
+
+                        currWidth = el.offsetWidth;
+                        currHeight = el.offsetHeight;
+
+                    });
+                }
+
+                if(! _this.setting.isFixed){
+
+                    //创建控制点
+                    for(var i = 0; i < controlDot.length; i ++){
+                        var controlEl = createEl("div", el, "AlloyClipControl");
+
+                        var attrName = ['left', 'right', 'top', 'bottom'];
+                        for(var j = 0; j < attrName.length; j ++){
+                            var attr = attrName[j];
+                            controlDot[i][attr] && (controlEl.style[attr] = (~~ controlDot[i][attr] - 10 + "px"));
+                        }
+
+                        Utils.addEvent(_this.left, controlEl, "mousedown", function(i){
+                            return function(e){
+                                controlClickFlag = 1;
+                                el.style.webkitTransformOrigin = controlDot[(controlDot.length - 1 - i)].position;
+
+                                currPageX = e.pageX;
+                                currPageY = e.pageY;
+
+                                currWidth = el.offsetWidth;
+                                currHeight = el.offsetHeight;
+
+                                currLeft = el.offsetLeft;
+                                currTop = el.offsetTop;
+
+                                currControlDotI = i;
+
+                                e.stopPropagation();
+                            };
+                        }(i));
+                    }
+                }else{
+                }
+
+                window.addEventListener("mousemove", function(e){
                     var x = e.pageX;
                     var y = e.pageY;
                     if(controlClickFlag){
@@ -607,16 +773,23 @@
 
                     }
 
-                };
+                });
                 
-                window.onmouseup = function(e){
+                window.addEventListener("mouseup", function(e){
                     controlClickFlag = 0;
                     rectClickFlag = 0;
                     _this.showClipPic();
-                };
+                });
 
 
                 _this.rect = el;
+
+                el.init = function(){
+                    centerRect();
+                    initBackground();
+                };
+
+                el.setBackgroundPosition = setBackgroundPosition;
 
                 return el;
             }();
@@ -634,12 +807,12 @@
         }
     };
 
-    var AC = function(selector, width, height){
+    var AC = function(selector, width, height, isFixed){
         //取到el
         var el = document.querySelectorAll(selector);
 
         for(var i = 0; i < el.length; i ++){
-            new singleAC(el[i], width, height);
+            new singleAC(el[i], width, height, isFixed);
         }
     };
 
