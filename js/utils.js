@@ -121,11 +121,19 @@
                         function check(node){
 
                             if(flag){
-                                if(selector.test(node[proName])){
+                                var proValue;
+                                if(proName == "tagName"){
+                                    proValue = node.tagName.toLowerCase();
+                                }else{
+                                    proValue = node[proName];
+                                }
+
+                                if(selector.test(proValue)){
 
                                     func.call(node, e);
                                     return;
                                 };
+
                             }else{
                                 if(selector == node){
                                     func.call(node, e);

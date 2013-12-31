@@ -34,9 +34,7 @@
     box-orient:vertical;
     text-align:center;
     position: relative;
-    border-right: 1px solid #ccc;
     overflow: hidden;
-    box-shadow: 3px 0 10px -5px rgb(126, 126, 126);
 }
 .AlloyClipOptionWrapper{
     border-bottom-left-radius: 4px;
@@ -213,4 +211,25 @@
     text-align:left;
     padding-left: 10px;
     width: auto;
+}
+.AlloyClipOptionPW{
+    height: 70px;
+    margin: 0;
+}
+.AlloyClipFilter{
+    list-style: none;
+    text-align: left;
+    padding: 0;
+    padding-left: 10px;
+    white-space: nowrap;
+    overflow: auto;
+}
+.AlloyClipFilter li{
+    display: inline-block;
+    margin-right: 10px;
+    border: 1px solid transparent;
+    cursor: pointer;
+}
+.AlloyClipFilter li:hover{
+    box-shadow: 0 0 4px 2px #ccc;
 }

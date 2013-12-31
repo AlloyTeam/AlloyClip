@@ -24,6 +24,7 @@
         this.el = el;
 
         this.setting = {};
+        this.status = {};
 
         this.setting.isFixed = isFixed;
 
@@ -128,6 +129,7 @@
 
                     _this.alterImgPositon(this);
                     _this.getRect().init();
+                    _this.showClipPic();
 
                     //show confirm
                     confirmButton.style.display = "block";
@@ -150,6 +152,7 @@
     };
 
     singleAC.prototype = {
+        constructor: singleAC,
         fileHandler: function(imgFile){
             //隐藏上传按钮
             this.hideUploadBox();
@@ -307,10 +310,11 @@
                 var el = {};
 
                 var barEl = createEl("div", _this.optionWrapper, "AlloyClipOptionBar");
+                var optionPreviewWrapper = createEl("div", _this.optionWrapper, "AlloyClipOptionPW");
 
                 var navItemWrapper = createEl("ul", barEl, "AlloyClipNav");
 
-                navItemWrapper.innerHTML = "<li>滤镜</li><li>边框</li>";
+                navItemWrapper.innerHTML = "<li id='filter'>滤镜</li><li id='border'>边框</li>";
 
                 var controller = createEl("div", barEl, "AlloyClipOptionController");
 
@@ -319,6 +323,89 @@
 
                 scale.innerHTML = "+";
                 minify.innerHTML = "-";
+
+                //滤镜处理函数
+                var filterHandler = function(){
+                    //清空原来所有的dom
+                    optionPreviewWrapper.innerHTML = "";
+                    var ul = createEl("ul", optionPreviewWrapper, "AlloyClipFilter");
+                    var effects = ["sketch", "lomo", "soften", "softenFace", "purpleStyle", "vintage", "warmAutumn", "rough", "softEnhancement"];
+
+                    //缩略图默认大小
+                    var miniHeight = 50;
+
+                    //得到一个小的缩略图
+                    var cHeight = _this.currLayer.width;
+                    var cWidth = _this.currLayer.height;
+
+                    var scaleSize = miniHeight / cHeight; 
+
+                    var miniLayer = _this.currLayer.clone().scale(scaleSize);
+
+                    for(var i = 0; i < effects.length; i ++){
+                        var effect = effects[i];
+                        var effectItem = createEl("li", ul);
+                        miniLayer.clone().ps(effect).show(effectItem);
+
+                        //点击item时候的操作
+                        effectItem.onclick = function(e){
+                            return function(){
+                                _this.psedAIPic = _this.currLayer.clone().ps(e).replaceChild(_this.rightContent);
+                            };
+                        }(effect);
+                    }
+                };
+
+                //边框处理函数
+                var borderHandler = function(){
+                    //清空原来所有的dom
+                    optionPreviewWrapper.innerHTML = "";
+                    var ul = createEl("ul", optionPreviewWrapper, "AlloyClipFilter AlloyClipBorder");
+                    var effects = ["../border/border1.jpg"];
+
+                    //缩略图默认大小
+                    var miniHeight = 50;
+
+                    //得到一个小的缩略图
+                    var cHeight = _this.currLayer.width;
+                    var cWidth = _this.currLayer.height;
+
+                    var scaleSize = miniHeight / cHeight; 
+
+                    var miniLayer = _this.currLayer.clone().scale(scaleSize);
+
+                    for(var i = 0; i < effects.length; i ++){
+                        var effect = effects[i];
+                        var effectItem = createEl("li", ul);
+
+                        var borderImg = new Image();
+                        borderImg.onload = function(){
+                            var borderLayer = $AI(this);
+                            borderLayer.show();
+                            borderLayer.scaleTo(cWidth, cHeight);
+                            miniLayer.clone().add(borderLayer.clone(), "变暗").show(effectItem);
+                        };
+                        borderImg.src = effect;
+
+                        //点击item时候的操作
+                        effectItem.onclick = function(e){
+                            return function(){
+                                _this.psedAIPic = _this.currLayer.clone().ps(e).replaceChild(_this.rightContent);
+                            };
+                        }(effect);
+                    }
+                };
+
+                Utils.addEvent(navItemWrapper, "li", "click", function(e){
+                    switch(this.id){
+                        case 'filter': filterHandler(e);
+                        break;
+
+                        case 'border': borderHandler(e);
+                        break;
+                    }
+                });
+
 
                 barEl.appendChild(_this.switchPic);
 
@@ -776,9 +863,9 @@
                 });
                 
                 window.addEventListener("mouseup", function(e){
+                    if(controlClickFlag || rectClickFlag) _this.showClipPic();
                     controlClickFlag = 0;
                     rectClickFlag = 0;
-                    _this.showClipPic();
                 });
 
 
@@ -802,7 +889,7 @@
             var scaleX = this.defaultWidth / clipInfo.width;
             var scaleY = this.defaultHeight / clipInfo.height;
 
-            aiLayer.clip(clipInfo.left, clipInfo.top, clipInfo.width, clipInfo.height).scale(scaleX, scaleY).show(this.rightContent);
+            this.currLayer = aiLayer.clip(clipInfo.left, clipInfo.top, clipInfo.width, clipInfo.height).scale(scaleX, scaleY).replaceChild(this.rightContent);
             this.rightInfo.style.display = "";
         }
     };
