@@ -6,10 +6,22 @@
 ;(function(){
     var Utils = window.AlloyClipTools.Utils;
     var createEl = function(type, parentNode, className){
-        var el = document.createElement(type);
-        parentNode && (parentNode.appendChild(el));
-        className && (el.className = className);
-        return el;
+        if(! className || typeof className == "string"){
+            var el = document.createElement(type);
+            parentNode && (parentNode.appendChild(el));
+            className && (el.className = className);
+            return el;
+        }else{
+            var el = document.createElement(type);
+
+            for(var i in parentNode){
+                el[i] = parentNode[i];
+            }
+
+            className && className.appendChild(el);
+
+            return el;
+        }
     };
 
     // isFixed  固定选取框 缩放图片
@@ -314,7 +326,7 @@
 
                 var navItemWrapper = createEl("ul", barEl, "AlloyClipNav");
 
-                navItemWrapper.innerHTML = "<li id='filter'>滤镜</li><li id='border'>边框</li>";
+                navItemWrapper.innerHTML = "<li id='filter'>滤镜</li><li id='border'>边框</li><li id='alteration'>调节</li>";
 
                 var controller = createEl("div", barEl, "AlloyClipOptionController");
 
@@ -361,7 +373,7 @@
                     //清空原来所有的dom
                     optionPreviewWrapper.innerHTML = "";
                     var ul = createEl("ul", optionPreviewWrapper, "AlloyClipFilter AlloyClipBorder");
-                    var effects = ["../border/border1.jpg"];
+                    var effects = ["../border/border1.png", "../border/border2.png"];
 
                     //缩略图默认大小
                     var miniHeight = 50;
@@ -372,28 +384,57 @@
 
                     var scaleSize = miniHeight / cHeight; 
 
-                    var miniLayer = _this.currLayer.clone().scale(scaleSize);
+                    var miniLayer = _this.currLayer.clone().scaleTo(null, miniHeight);
 
                     for(var i = 0; i < effects.length; i ++){
                         var effect = effects[i];
                         var effectItem = createEl("li", ul);
 
                         var borderImg = new Image();
-                        borderImg.onload = function(){
-                            var borderLayer = $AI(this);
-                            borderLayer.show();
-                            borderLayer.scaleTo(cWidth, cHeight);
-                            miniLayer.clone().add(borderLayer.clone(), "变暗").show(effectItem);
-                        };
+                        borderImg.onload = function(effectItem){
+                            return function(){
+                                var borderLayer = $AI(this);
+                                borderLayer.scaleTo(miniLayer.width, miniLayer.height);
+                                miniLayer.clone().add(borderLayer.clone()).show(effectItem);
+                            };
+                        }(effectItem);
                         borderImg.src = effect;
 
                         //点击item时候的操作
-                        effectItem.onclick = function(e){
+                        effectItem.onclick = function(effect){
                             return function(){
-                                _this.psedAIPic = _this.currLayer.clone().ps(e).replaceChild(_this.rightContent);
+                                var borderImg = new Image();
+                                borderImg.onload = function(effectItem){
+                                    return function(){
+                                        var borderLayer = $AI(this);
+                                        borderLayer.scaleTo(_this.currLayer.width, _this.currLayer.height);
+                                        _this.psedAIPic = _this.currLayer.clone().add(borderLayer.clone()).replaceChild(_this.rightContent);
+                                    };
+                                }(effectItem);
+                                borderImg.src = effect;
                             };
                         }(effect);
                     }
+                };
+
+                var alterationHandler = function(e){
+                    optionPreviewWrapper.innerHTML = "";
+                    var ul = createEl("ul", optionPreviewWrapper, "AlloyClipFilter AlloyClipAlter");
+
+                    var callback = function(){};
+                    var SBar = _this.getScrollBar(160, 0.5, "色　相", "apH", callback);
+                    var HBar = _this.getScrollBar(160, 0.5, "饱和度", "apS", callback);
+                    var IBar = _this.getScrollBar(160, 0.5, "亮　度", "apI", callback);
+                    var DBar = _this.getScrollBar(160, 0.5, "对比度", "apD", callback);
+                    ul.appendChild(SBar);
+                    ul.appendChild(HBar);
+                    ul.appendChild(IBar);
+                    ul.appendChild(DBar);
+
+                    _this.status.currOperation = "Alteration";
+                    _this.status.toolBarValue = {
+                        Alteration: []
+                    };
                 };
 
                 Utils.addEvent(navItemWrapper, "li", "click", function(e){
@@ -403,15 +444,155 @@
 
                         case 'border': borderHandler(e);
                         break;
+
+                        case 'alteration': alterationHandler(e);
+                        break;
                     }
                 });
 
+                _this.bindScrollBarEvent();
 
                 barEl.appendChild(_this.switchPic);
 
                 _this.optionEl = el;
                 return el;
             }();
+        },
+
+        getScrollBar: function(width, originPoint, name, id, changeCallback){
+            var width = width || 200;
+            var originPoint = originPoint || 0.5;
+            var name = name || "";
+
+            var barEl = document.createElement("li");
+            barEl.className = "apScrollBarWrapper";
+
+            var apBarTitle = createEl("div", {className: "apBarTitle"}, barEl);
+
+            var apBarContent = createEl("div", {className: "apBarContent"}, barEl);
+            var apBarLineLeft = createEl("div", {className: "apBarLineLeft"}, apBarContent);
+            var apBarScrollEl = createEl("div", {className: "apBarScrollEl", id: id}, apBarContent);
+            var apBarLineRight = createEl("div", {className: "apBarLineRight"}, apBarContent);
+
+            var scrollElWidth = 30;
+
+            apBarTitle.innerHTML = name;
+
+            //设置位置
+            apBarLineLeft.style.width = originPoint * width + "px";
+            apBarLineRight.style.width = (1 - originPoint) * width + "px";
+            apBarScrollEl.style.left = originPoint * width - scrollElWidth / 2 + "px";
+
+            //P.event.bindScrollBarEvent(name, apBarLineLeft, apBarScrollEl, apBarLineRight, width, scrollElWidth, changeCallback);
+            
+            return barEl;
+        },
+                    //绑定scrollBarEvent
+        bindScrollBarEvent: function(width){
+            var _this = this;
+            var scrollMouseDown = 0;
+
+            var originX = 0, originY = 0, originLeft = 0; originTop = 0;
+
+            var width = width || 160;
+            var scrollElWidth = scrollElWidth || 30;
+            var currPoint = 0.5;
+
+            var scrollEl, leftEl, rightEl;
+
+            var originImg;
+
+            document.body.addEventListener("mousedown", function(e){
+                var target = e.target;
+                if(target.className == "apBarScrollEl"){
+                    scrollMouseDown = 1;
+
+                    scrollEl = target;
+
+                    leftEl = scrollEl.parentNode.childNodes[0];
+                    rightEl = scrollEl.parentNode.childNodes[2];
+                    
+                    originX = e.pageX;
+                    originY = e.pageY;
+
+                    originLeft = target.offsetLeft;
+                    originTop = target.offsetTop;
+                }
+
+                e.preventDefault();
+            }, false);
+
+            document.body.addEventListener("mouseup", function(e){
+                if(scrollMouseDown){
+                    var id = scrollEl.id;
+                    var currImg = _this.currLayer.clone();
+
+                    //当前操作为色调的处理
+                    if(_this.status.currOperation == "Alteration"){
+                        if(id == "apH"){
+                            _this.status.toolBarValue.Alteration[0] = currPoint;
+                        }else if(id == "apS"){
+                            _this.status.toolBarValue.Alteration[1] = currPoint;
+                        }else if(id == "apI"){
+                            _this.status.toolBarValue.Alteration[2] = currPoint;
+                        }else if(id == "apD"){
+                            _this.status.toolBarValue.Alteration[3] = currPoint;
+                        }
+
+                        scrollMouseDown = 0;
+
+                        var toolBarValue = _this.status.toolBarValue.Alteration;
+                        if(id == "apD"){
+                            var D = toolBarValue[3];
+                            D = (D - 0.5) * 100;
+
+                            currImg.act("brightness", 0, D).replaceChild(_this.rightContent);
+                        }else{
+                            var H = toolBarValue[0];
+                            var S = toolBarValue[1];
+                            var I = toolBarValue[2];
+
+                            //换算成正常的值
+                            H = (H - 0.5) * 360;
+                            S = (S - 0.5) * 100;
+                            I = (I - 0.5) * 100;
+
+                            //originImg = $AI(P.watchQueue[currImg]);
+                            currImg.act("setHSI", H, S, I).replaceChild(_this.rightContent);
+                        }
+                    }
+                }
+
+                scrollMouseDown = 0;
+            }, false);
+
+
+            document.body.addEventListener("mousemove", function(e){
+                var targetEl = e.target;
+                if(scrollMouseDown){
+                    var x = e.pageX;
+                    var y = e.pageY;
+
+                    var dx = x - originX;
+                    var dy = y - originY;
+
+                    var left = originLeft + dx;
+                    var top = originTop + dy;
+
+                    currPoint = (left + scrollElWidth / 2) / width;
+                    if(currPoint > 1 || currPoint < 0) return;
+
+                    scrollEl.style.left = left + "px";
+                    //scrollEl.style.top = top + "px";
+
+                    //设置左右宽度
+                    leftEl.style.width = width * currPoint + "px";
+                    rightEl.style.width = width * (1 - currPoint) + "px";
+                    
+                    e.preventDefault();
+                }
+
+            }, false);
         },
 
         //创建选取框

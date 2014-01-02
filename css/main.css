@@ -47,7 +47,7 @@
     height: 100%;
 }
 .AlloyClipRight canvas{
-        box-shadow: 0 0 3px 0 rgb(125, 125, 125);
+    box-shadow: 0 0 3px 0 rgb(125, 125, 125);
 }
 .AlloyClipButton{
     border-radius: 4px;
@@ -215,14 +215,18 @@
 .AlloyClipOptionPW{
     height: 70px;
     margin: 0;
+    overflow: auto;
+    overflow-y: hidden;
 }
 .AlloyClipFilter{
     list-style: none;
     text-align: left;
     padding: 0;
     padding-left: 10px;
+    padding-top: 10px;
     white-space: nowrap;
-    overflow: auto;
+    overflow: visible;
+    margin: 0;
 }
 .AlloyClipFilter li{
     display: inline-block;
@@ -232,4 +236,52 @@
 }
 .AlloyClipFilter li:hover{
     box-shadow: 0 0 4px 2px #ccc;
+}
+
+.AlloyClipAlter li{
+    border: 0px;
+    cursor: default;
+}
+.AlloyClipAlter li:hover{
+    box-shadow: none;
+}
+
+/* apscrollBar */
+.apScrollBarWrapper{
+    padding-top: 10px;
+    height: 40px;
+    display: inline-block;
+}
+.apBarTitle{
+    float: left;
+    margin-left: 8px;
+    height: 30px;
+    line-height: 30px;
+}
+.apBarContent{
+    position: relative;
+    float: left;
+    margin-left: 22px;
+}
+.apBarLineLeft, .apBarLineRight{
+    display: inline-block;
+    height: 4px;
+}
+.apBarLineLeft{
+    width: 100px;
+    background: #167efc;
+}
+.apBarScrollEl{
+    width: 30px;
+    height: 30px;
+    border-radius: 15px;
+    background: #fff;
+    display: inline-block;
+    position: absolute;
+    cursor: default;
+    -webkit-box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+}
+.apBarLineRight{
+    width: 100px;
+    background: #b5b5b6;
 }
