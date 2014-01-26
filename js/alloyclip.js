@@ -37,6 +37,7 @@
 
         this.setting = {};
         this.status = {};
+        this.eventPool = {};
 
         this.setting.isFixed = isFixed;
 
@@ -79,6 +80,15 @@
         var switchPic = createEl("div", right, "AlloyClipSwitchPic");
         var confirmButton = createEl("div", right, "AlloyClipConfim");
 
+        confirmButton.onclick = function(){
+            var eventQueue = _this.eventPool['upload'] || [];
+            var data = _this.psedAIPic.save();
+
+            for(var i = 0; i < eventQueue.length; i ++){
+                eventQueue[i](_this.psed);
+            }
+        };
+
         rightTitle.innerHTML = "预览";
         rightInfo.innerHTML = _w + "×" + _h;
         confirmButton.innerHTML = "确定";
@@ -98,8 +108,6 @@
 
         this.hideUploadBox = function(){
             button.style.display = "none";
-            //buttonBottom.style.display = "none";
-            //buttonTop.style.display = "none";
         };
 
         this.showCanvas = function(el){
@@ -135,6 +143,8 @@
                 var tempImg = new Image();
                 tempImg.onload = function(){
                     _this.imgEl = this;
+                    _this.originAILayer = $AI(this);
+
                     _this.hideUploadBox();
                     _this.showCanvas(this);
                     _this.showMask();
@@ -274,16 +284,22 @@
 
         //调整img元素位置
         alterImgPositon: function(imgEl){
+            console.log(this.left.offsetHeight + "OK");
             var imgWidth = imgEl.width;
             var imgHeight = imgEl.height;
 
-            imgEl.style.width = 0;
-            imgEl.style.height = 0;
+            imgEl.style.width = "0px";
+            imgEl.style.height = "0px";
 
             var wrapperWidth = imgEl.parentNode.parentNode.offsetWidth;
             var wrapperHeight = imgEl.parentNode.parentNode.offsetHeight;
 
+            console.log(wrapperHeight + " L");
+
             var imgRatio = imgWidth / imgHeight;
+
+            console.log(this.canvasWrapper.offsetHeight);
+            console.log(this.left.offsetHeight);
 
             //图像的边界信息
             var offsetLeft, offsetTop, width, height;
@@ -307,7 +323,7 @@
                 offsetTop = ~~ ((wrapperHeight - height) / 2);
             }
 
-            imgEl.parentNode.style.maxHeight = ~~ height + "px";
+            //imgEl.parentNode.style.maxHeight = ~~ height + "px";
 
             this.imgBoundInfo.offsetLeft = imgEl.offsetLeft;
             this.imgBoundInfo.offsetTop = imgEl.offsetTop;
@@ -318,7 +334,10 @@
         //创建option
         getOption: function(){
             var _this = this;
+
+            //初始化当前的操作为alteration
             return this.optionEl || function(){
+                _this.status.currOper = "alterationHandler";
                 var el = {};
 
                 var barEl = createEl("div", _this.optionWrapper, "AlloyClipOptionBar");
@@ -326,25 +345,56 @@
 
                 var navItemWrapper = createEl("ul", barEl, "AlloyClipNav");
 
-                navItemWrapper.innerHTML = "<li id='filter'>滤镜</li><li id='border'>边框</li><li id='alteration'>调节</li>";
+                navItemWrapper.innerHTML = "<li id='alteration'>调节</li><li id='filter'>滤镜</li><li id='border'>边框</li>";
 
                 var controller = createEl("div", barEl, "AlloyClipOptionController");
 
-                var scale = createEl("span", controller, "AlloyClipCItem");
-                var minify = createEl("span", controller, "AlloyClipCItem");
+                if(_this.isFixed){
+                    var scale = createEl("span", controller, "AlloyClipCItem");
+                    var minify = createEl("span", controller, "AlloyClipCItem");
+                    scale.innerHTML = "+";
+                    minify.innerHTML = "-";
+                }
 
-                scale.innerHTML = "+";
-                minify.innerHTML = "-";
+                var rotate = createEl("span", controller, "AlloyClipCItem");
+                rotate.innerHTML = "旋转";
+
+                rotate.style.fontSize = "14px";
+                rotate.style.verticalAlign = "top";
+                rotate.style.fontFamily = "Microsoft Yahei";
+
+                //处理旋转后操作
+                rotate.onclick = function(){
+                    //旋转图片  暂时使用AlloyImage旋转方法
+                    /*
+                    _this.imgEl.style.webkitTransform = "rotate(90deg)";
+                    _this.imgEl.style.transform = "rotate(90deg)";
+                    */
+                    _this.originAILayer.rotate(90).replace(_this.imgEl);
+                    _this.alterImgPositon(_this.imgEl);
+                    _this.getRect().init();
+                    _this.showClipPic();
+
+                    //更新图片边界信息
+                };
 
                 //滤镜处理函数
                 var filterHandler = function(){
+                    if(_this.status.currOper != "filterHandler"){
+                        _this.psedAIPic && (_this.currLayer = _this.psedAIPic);
+                    }
+
+                    _this.status.currOper = "filterHandler";
                     //清空原来所有的dom
                     optionPreviewWrapper.innerHTML = "";
                     var ul = createEl("ul", optionPreviewWrapper, "AlloyClipFilter");
                     var effects = ["sketch", "lomo", "soften", "softenFace", "purpleStyle", "vintage", "warmAutumn", "rough", "softEnhancement"];
 
                     //缩略图默认大小
-                    var miniHeight = 50;
+                    var preveiwHeight = optionPreviewWrapper.offsetHeight;
+                    var miniHeight = preveiwHeight * 0.7;
+
+                    ul.style.paddingTop = ~~(preveiwHeight * 0.15) + "px";
 
                     //得到一个小的缩略图
                     var cHeight = _this.currLayer.width;
@@ -370,6 +420,11 @@
 
                 //边框处理函数
                 var borderHandler = function(){
+                    if(_this.status.currOper != "borderHandler"){
+                        _this.psedAIPic && (_this.currLayer = _this.psedAIPic);
+                    }
+
+                    _this.status.currOper = "borderHandler";
                     //清空原来所有的dom
                     optionPreviewWrapper.innerHTML = "";
                     var ul = createEl("ul", optionPreviewWrapper, "AlloyClipFilter AlloyClipBorder");
@@ -418,6 +473,12 @@
                 };
 
                 var alterationHandler = function(e){
+                    if(_this.status.currOper != "alterationHandler"){
+                        _this.psedAIPic && (_this.currLayer = _this.psedAIPic);
+                    }
+
+                    _this.status.currOper = "alterationHandler";
+
                     optionPreviewWrapper.innerHTML = "";
                     var ul = createEl("ul", optionPreviewWrapper, "AlloyClipFilter AlloyClipAlter");
 
@@ -433,7 +494,7 @@
 
                     _this.status.currOperation = "Alteration";
                     _this.status.toolBarValue = {
-                        Alteration: []
+                        Alteration: [0.5, 0.5, 0.5, 0.5]
                     };
                 };
 
@@ -455,6 +516,24 @@
                 barEl.appendChild(_this.switchPic);
 
                 _this.optionEl = el;
+
+                //el.filterHandler = filterHandler;
+                //el.borderHandler = borderHandler;
+                //el.alterationHandler = alterationHandler;
+
+                el.doCurrOptionPro = function(){
+                    switch(_this.status.currOper){
+                        case "filterHandler" : filterHandler();
+                        break;
+
+                        case "borderHandler" : borderHandler();
+                        break;
+
+                        case "alterationHandler" : alterationHandler();
+                        break;
+                    }
+                };
+
                 return el;
             }();
         },
@@ -558,7 +637,7 @@
                             I = (I - 0.5) * 100;
 
                             //originImg = $AI(P.watchQueue[currImg]);
-                            currImg.act("setHSI", H, S, I).replaceChild(_this.rightContent);
+                            currImg.act("setHSI", H, S, I, 0).replaceChild(_this.rightContent);
                         }
                     }
                 }
@@ -602,6 +681,9 @@
                 var el = createEl("div", _this.left, "AlloyClipRect");
                 el.style.width = _this.defaultWidth + "px";
                 el.style.height = _this.defaultHeight + "px";
+
+                var bgImgWrapper = createEl("div", el, "AlloyBgImgWrapper");
+                var bgImg = createEl("img", bgImgWrapper, "AlloyBgImg");
 
                 //居中框
                 var centerRect = function(){
@@ -657,13 +739,15 @@
 
                 //设置rect的背景position
                 var setBackgroundPosition = function(){
+
                     var imgOffsetLeft = _this.imgEl.offsetLeft;
                     var imgOffsetTop = _this.imgEl.offsetTop;
 
                     var left = ~~ (el.offsetLeft - imgOffsetLeft) + 2;
                     var top = ~~ (el.offsetTop - imgOffsetTop) + 2;
 
-                    el.style.backgroundPosition = (- left) + "px " + (- top) + "px";
+                    bgImg.style.left = - left + "px";
+                    bgImg.style.top = - top + "px";
 
                     _this.clipInfo.left = left;
                     _this.clipInfo.top = top;
@@ -899,11 +983,13 @@
                 };
 
                 var initBackground = function(){
-                    var backgroundSize = _this.imgBoundInfo.width + "px " + _this.imgBoundInfo.height + "px";
+                    bgImg.src = _this.imgEl.src;
+                    bgImg.style.width =  _this.imgBoundInfo.width + "px";
+                    bgImg.style.height =  _this.imgBoundInfo.height + "px";
 
                     //设置el的bg
-                    el.style.background = "url(" + _this.imgEl.src + ") no-repeat";
-                    el.style.backgroundSize = backgroundSize;
+                    //el.style.background = "url(" + _this.imgEl.src + ") no-repeat";
+                    //el.style.backgroundSize = backgroundSize;
                     setBackgroundPosition();
                 }
 
@@ -1071,16 +1157,30 @@
             var scaleY = this.defaultHeight / clipInfo.height;
 
             this.currLayer = aiLayer.clip(clipInfo.left, clipInfo.top, clipInfo.width, clipInfo.height).scale(scaleX, scaleY).replaceChild(this.rightContent);
+            this.psedAIPic = this.currLayer;
             this.rightInfo.style.display = "";
+
+            this.getOption().doCurrOptionPro();
+        },
+
+        addEventListener: function(eventType, func){
+            if(! this.eventPool[eventType]){
+                this.eventPool[eventType] = [];
+            }
+
+            this.eventPool[eventType].push(func);
         }
     };
 
     var AC = function(selector, width, height, isFixed){
-        //取到el
-        var el = document.querySelectorAll(selector);
+        if(typeof selector == "object"){
+        }else{
+            //取到el
+            var el = document.querySelectorAll(selector);
 
-        for(var i = 0; i < el.length; i ++){
-            new singleAC(el[i], width, height, isFixed);
+            for(var i = 0; i < el.length; i ++){
+                new singleAC(el[i], width, height, isFixed);
+            }
         }
     };
 
