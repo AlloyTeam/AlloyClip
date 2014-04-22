@@ -1,0 +1,1 @@
+var CSSString=".test{background-image:url('test.jpg');background-repeat:no-repeat;overflow:hidden;}#test2{background:url('hello.jpg');}body{color:#000;}";

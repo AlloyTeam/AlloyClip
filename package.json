@@ -1,0 +1,26 @@
+{
+  "name": "AlloyClip",
+  "version": "0.0.0",
+  "description": "a pc & mobile image clip kit based on AlloyImage",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AlloyTeam/AlloyClip.git"
+  },
+  "author": "dorsywang",
+  "license": "gpl",
+  "bugs": {
+    "url": "https://github.com/AlloyTeam/AlloyClip/issues"
+  },
+  "homepage": "https://github.com/AlloyTeam/AlloyClip",
+  "devDependencies": {
+    "grunt-contrib-uglify": "^0.4.0",
+    "grunt-csstojs": "^0.2.0"
+  }
+}
