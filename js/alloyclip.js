@@ -81,11 +81,11 @@
         var confirmButton = createEl("div", right, "AlloyClipConfim");
 
         confirmButton.onclick = function(){
-            var eventQueue = _this.eventPool['upload'] || [];
+            var eventQueue = _this.eventPool['ok'] || [];
             var data = _this.psedAIPic.save();
 
             for(var i = 0; i < eventQueue.length; i ++){
-                eventQueue[i](_this.psed);
+                eventQueue[i](data);
             }
         };
 
@@ -171,6 +171,10 @@
         //选取框元素
         this.rect = null;
 
+
+        //生成随机ID
+        this.uid = 'AlloyClip_' + ~~ (Math.random() * 1E6);
+
     };
 
     singleAC.prototype = {
@@ -221,6 +225,8 @@
 
                     _this.getRect().setBackgroundPosition();
 
+                    _this.showClipPic();
+
                     e.preventDefault();
                 }
             });
@@ -259,6 +265,8 @@
                 _this.imgBoundInfo.height = height;
 
                 _this.getRect().init();
+
+                _this.showClipPic();
             };
 
             this.left.addEventListener("mousewheel", function(e){
@@ -542,6 +550,7 @@
             var width = width || 200;
             var originPoint = originPoint || 0.5;
             var name = name || "";
+            var uid = this.uid;
 
             var barEl = document.createElement("li");
             barEl.className = "apScrollBarWrapper";
@@ -550,7 +559,7 @@
 
             var apBarContent = createEl("div", {className: "apBarContent"}, barEl);
             var apBarLineLeft = createEl("div", {className: "apBarLineLeft"}, apBarContent);
-            var apBarScrollEl = createEl("div", {className: "apBarScrollEl", id: id}, apBarContent);
+            var apBarScrollEl = createEl("div", {className: "apBarScrollEl", 'data-uid': uid, id: id}, apBarContent);
             var apBarLineRight = createEl("div", {className: "apBarLineRight"}, apBarContent);
 
             var scrollElWidth = 30;
@@ -584,6 +593,9 @@
             document.body.addEventListener("mousedown", function(e){
                 var target = e.target;
                 if(target.className == "apBarScrollEl"){
+                    var uid = target.getAttribute('data-uid');
+
+                    if(uid != _this.uid) return;
                     scrollMouseDown = 1;
 
                     scrollEl = target;
@@ -1178,9 +1190,22 @@
             //取到el
             var el = document.querySelectorAll(selector);
 
+            var outObject = {};
+            var acPool = [];
+
             for(var i = 0; i < el.length; i ++){
-                new singleAC(el[i], width, height, isFixed);
+                acPool.push(new singleAC(el[i], width, height, isFixed));
             }
+
+            outObject.ok = function(func){
+                for(var i = 0; i < acPool.length; i ++){
+                    acPool[i].addEventListener('ok', function(base64string){
+                        func && func(base64string);
+                    });
+                }
+            };
+
+            return outObject;
         }
     };
 

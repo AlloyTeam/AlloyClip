@@ -6,13 +6,16 @@
   <link media="all" rel="stylesheet" href="../css/main.css" type="text/css" />
 </head>
 <body>
-<div class="t" style="width: 500px; height: 300px;margin: 0 auto;">
+<div class="t" style="width: 500px; height: 300px;margin: 0 auto;"></div>
+<div class="t" style="width: 500px; height: 300px;margin: 150px auto;">
 </div>
 	<script type="text/javascript" src="../js/alloyimage.js"></script>
   <script type="text/javascript" src="../js/utils.js"></script>
 	<script type="text/javascript" src="../js/alloyclip.js"></script>
   <script type="text/javascript">
-  new $AC(".t", 100, 100, 0);
+    new $AC(".t", 100, 100, 0).ok(function(base64){
+        alert(base64);
+    });
   
   </script>
 </body>
