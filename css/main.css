@@ -302,6 +302,7 @@
 }
 
 /* 以下为scroll样式 */
+/*
 ::-webkit-scrollbar{
     width: 9px;
     height: 9px;
@@ -379,3 +380,4 @@
 	background-color:#f1f1f1;
 	-webkit-border-radius: 1px;
 } 
+*/

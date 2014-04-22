@@ -15,7 +15,8 @@
             var el = document.createElement(type);
 
             for(var i in parentNode){
-                el[i] = parentNode[i];
+                if(i != "className" && i !="id") el.setAttribute(i, parentNode[i]);
+                else el[i] = parentNode[i];
             }
 
             className && className.appendChild(el);
@@ -559,7 +560,7 @@
 
             var apBarContent = createEl("div", {className: "apBarContent"}, barEl);
             var apBarLineLeft = createEl("div", {className: "apBarLineLeft"}, apBarContent);
-            var apBarScrollEl = createEl("div", {className: "apBarScrollEl", 'data-uid': uid, id: id}, apBarContent);
+            var apBarScrollEl = createEl("div", {className: "apBarScrollEl", "data-uid": uid, id: id}, apBarContent);
             var apBarLineRight = createEl("div", {className: "apBarLineRight"}, apBarContent);
 
             var scrollElWidth = 30;
