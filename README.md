@@ -1,7 +1,7 @@
 AlloyClip
 =========
 ##DEMO PAGE
-[查看使用DEMO](http://alloyteam.github.com/AlloyClip/)
+###[查看使用DEMO](http://alloyteam.github.com/AlloyClip/)
 
 ##description
 
