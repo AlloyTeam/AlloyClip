@@ -431,7 +431,7 @@
                     //清空原来所有的dom
                     optionPreviewWrapper.innerHTML = "";
                     var ul = createEl("ul", optionPreviewWrapper, "AlloyClipFilter AlloyClipBorder");
-                    var effects = ["../border/border1.png", "../border/border2.png"];
+                    var effects = ["border/border1.png", "border/border2.png"];
 
                     //缩略图默认大小
                     var miniHeight = 50;
