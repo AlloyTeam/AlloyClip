@@ -86,7 +86,7 @@
             var data = _this.psedAIPic.save();
 
             for(var i = 0; i < eventQueue.length; i ++){
-                eventQueue[i](data);
+                eventQueue[i](data, _this.psedAIPic);
             }
         };
 
@@ -1200,8 +1200,8 @@
 
             outObject.ok = function(func){
                 for(var i = 0; i < acPool.length; i ++){
-                    acPool[i].addEventListener('ok', function(base64string){
-                        func && func(base64string);
+                    acPool[i].addEventListener('ok', function(base64string, aiObj){
+                        func && func(base64string, aiObj);
                     });
                 }
             };
@@ -1210,5 +1210,5 @@
         }
     };
 
-    $AC = AC;
+    $AC = AlloyClip = AC;
 })();

@@ -1,0 +1,66 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title></title>
+  <link media="all" rel="stylesheet" href="css/AlloyClip.css" type="text/css" />
+  <style type="text/css">
+.clip, .clip2{
+  width: 500px; 
+  height: 400px;
+  margin: 10px;
+  float: left;
+}
+h2{
+  text-align: center;
+}
+.footer{
+  clear: both;
+  margin-top: 600px;
+  text-align: center;
+  font-size: 14px;
+  color: #888;
+  line-height: 22px;
+}
+.footer a{
+  color: #888;
+  text-decoration:none;
+}
+  </style>
+</head>
+<body>
+<h2>AlloyClip Demo Page</h2>
+<p class="description">
+  　　AlloyClip是基于HTML5 Web图像处理引擎的图像裁剪组件,提供两种不同的裁剪样式
+</p>
+
+<div class="clip"></div>
+<div class="clip2"></div>
+
+<script type="text/javascript" src="js/alloyimage.js"></script>
+<script type="text/javascript" src="js/alloyclip.min.js"></script>
+
+
+<script type="text/javascript">
+  new $AC(".clip", 100, 100, 0).ok(function(base64, aiObj){
+      alert(base64);
+
+      aiObj.saveFile("AlloyCliped.jpg", 0.8);
+  });
+
+  new $AC(".clip2", 100, 100, 1).ok(function(base64, aiObj){
+      alert(base64);
+      aiObj.saveFile("AlloyCliped_2.jpg", 0.8);
+  });
+
+</script>
+
+<div class="footer">
+  <div class="copyright"> 
+    <a href="http://alloyteam.github.io/AlloyImage/" target="_blank">AlloyImage</a> 　 <a href="http://alloyteam.github.io/AlloyDesigner/" target="_blank">AlloyDesigner</a> 　<a href="http://alloyteam.github.io/" target="_blank">关于</a><br />
+    Copyright ©  2014 <a href="http://www.alloyteam.com" target="_blank">Tencent AlloyTeam.</a> All Rights Reserved. 
+  </div>
+</div>
+
+</body>
+</html>
