@@ -293,7 +293,6 @@
 
         //调整img元素位置
         alterImgPositon: function(imgEl){
-            console.log(this.left.offsetHeight + "OK");
             var imgWidth = imgEl.width;
             var imgHeight = imgEl.height;
 
@@ -303,12 +302,7 @@
             var wrapperWidth = imgEl.parentNode.parentNode.offsetWidth;
             var wrapperHeight = imgEl.parentNode.parentNode.offsetHeight;
 
-            console.log(wrapperHeight + " L");
-
             var imgRatio = imgWidth / imgHeight;
-
-            console.log(this.canvasWrapper.offsetHeight);
-            console.log(this.left.offsetHeight);
 
             //图像的边界信息
             var offsetLeft, offsetTop, width, height;
